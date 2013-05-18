@@ -14,6 +14,7 @@ namespace GobangGameClient
     {
         private int tableIndex;
         private int side;
+        private int color; //edit
         private DotColor[,] grid = new DotColor[15, 15]; //保存颜色，用于消点时进行判断
         private Bitmap blackBitmap;
         private Bitmap whiteBitmap;
@@ -32,6 +33,7 @@ namespace GobangGameClient
             InitializeComponent();
             this.tableIndex = TableIndex;
             this.side = Side;
+            this.color = side;
             labelDelegate = new LabelDelegate(SetLabel);
             buttonDelegate = new ButtonDelegate(SetButton);
             radioButtonDelegate = new RadioButtonDelegate(SetRadioButton);
@@ -105,6 +107,7 @@ namespace GobangGameClient
         public void SetDot(int i, int j, DotColor dotColor)
         {
             service.AddItemToListBox(string.Format("{0},{1},{2}", i, j, dotColor));
+            service.AddItemToListBox(string.Format("side:{0}",side));
             grid[i, j] = dotColor;
             pictureBox1.Invalidate();
         }
@@ -255,12 +258,12 @@ namespace GobangGameClient
             int y = e.Y / 20;
             if (!(x < 1 || x > 15 || y < 1 || y > 15))
             {
-                if (grid[x - 1, y - 1] != DotColor.None)
+                if (grid[x - 1, y - 1] == DotColor.None)//edit
                 {
-                    int color = (int)grid[x - 1, y - 1];
+                    //int color = (int)grid[x - 1, y - 1];
                     //发送格式：UnsetDot,桌号,座位号,行,列,颜色
                     service.SendToServer(string.Format(
-                       "UnsetDot,{0},{1},{2},{3},{4}", tableIndex, side, x - 1, y - 1, color));
+                       "SetDot,{0},{1},{2},{3},{4}", tableIndex, side, x - 1, y - 1, this.color));//edit
                 }
             }
         }
@@ -272,7 +275,7 @@ namespace GobangGameClient
         /// <param name="listBoxString">listbox显示的信息</param>
         public void SetTableSideText(string sideString, string labelSideString, string listBoxString)
         {
-            string s = "白方";
+            string s = "白方"; 
             if (sideString == "0")
             {
                 s = "黑方：";

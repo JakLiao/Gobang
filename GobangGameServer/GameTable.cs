@@ -17,6 +17,7 @@ namespace GobangGameServer
         private System.Timers.Timer timer;       //用于定时产生棋子
         private int NextdotColor = 0;            //应该产生黑棋子还是白棋子
         private ListBox listbox;
+        private int turn;                   //轮流玩,0为黑，1为白 edit 
         Random rnd = new Random();
         Service service;
         public GameTable(ListBox listbox)
@@ -25,9 +26,10 @@ namespace GobangGameServer
             gamePlayer[0] = new Player();
             gamePlayer[1] = new Player();
             timer = new System.Timers.Timer();
-            timer.Elapsed += new ElapsedEventHandler(timer_Elapsed);
+            //timer.Elapsed += new ElapsedEventHandler(timer_Elapsed);
             timer.Enabled = false;
             this.listbox = listbox;
+            this.turn = 0;
             service = new Service(listbox);
             ResetGrid();
         }
@@ -79,57 +81,158 @@ namespace GobangGameServer
         /// <param name="i">指定棋盘的第几行</param>
         /// <param name="j">指定棋盘的第几列</param>
         /// <param name="dotColor">棋子颜色</param>
-        private void SetDot(int i, int j, int dotColor)
+        public void SetDot(int i, int j, int dotColor)//edit private to public
         {
-            //向两个用户发送产生的棋子信息，并判断是否有相邻棋子
-            //发送格式：SetDot,行,列,颜色
-            grid[i, j] = dotColor;
-            service.SendToBoth(this, string.Format("SetDot,{0},{1},{2}", i, j, dotColor));
-            /*----------以下判断当前行是否有相邻点----------*/
-            int k1, k2;   //k1:循环初值，k2:循环终值
-            if (i == 0)
+            if (dotColor == turn)//edit
             {
-                //如果是首行，只需要判断下边的点
-                k1 = k2 = 1;
-            }
-            else if (i == grid.GetUpperBound(0))
-            {
-                //如果是最后一行，只需要判断上边的点
-                k1 = k2 = grid.GetUpperBound(0) - 1;
-            }
-            else
-            {
-                //如果是中间的行，上下两边的点都要判断
-                k1 = i - 1; k2 = i + 1;
-            }
-            for (int x = k1; x <= k2; x += 2)
-            {
-                if (grid[x, j] == dotColor)
+                //向两个用户发送产生的棋子信息，并判断是否有相邻棋子
+                //发送格式：SetDot,行,列,颜色
+                grid[i, j] = dotColor;
+                service.SendToBoth(this, string.Format("SetDot,{0},{1},{2}", i, j, dotColor));
+                //winCheck(i,j,dotColor);
+                if (win(dotColor))//edit
                 {
                     ShowWin(dotColor);
                 }
-            }
-            /*-------------以下判断当前列是否有相邻点------------------*/
-            if (j == 0)
-            {
-                k1 = k2 = 1;
-            }
-            else if (j == grid.GetUpperBound(1))
-            {
-                k1 = k2 = grid.GetUpperBound(1) - 1;
-            }
-            else
-            {
-                k1 = j - 1; k2 = j + 1;
-            }
-            for (int y = k1; y <= k2; y += 2)
-            {
-                if (grid[i, y] == dotColor)
-                {
-                    ShowWin(dotColor);
-                }
+                turn = (turn + 1)%2;
             }
         }
+        //private void winCheck(int i, int j, int dotColor)
+        //{
+        //            /*----------以下判断当前行是否有相邻点----------*/
+        //    int k1, k2;   //k1:循环初值，k2:循环终值
+        //    if (i == 0)
+        //    {
+        //        如果是首行，只需要判断下边的点
+        //        k1 = k2 = 1;
+        //    }
+        //    else if (i == grid.GetUpperBound(0))
+        //    {
+        //        如果是最后一行，只需要判断上边的点
+        //        k1 = k2 = grid.GetUpperBound(0) - 1;
+        //    }
+        //    else
+        //    {
+        //        如果是中间的行，上下两边的点都要判断
+        //        k1 = i - 1; k2 = i + 1;
+        //    }
+        //    for (int x = k1; x <= k2; x += 2)
+        //    {
+        //        if (grid[x, j] == dotColor)
+        //        {
+        //            ShowWin(dotColor);
+        //        }
+        //    }
+        //    /*-------------以下判断当前列是否有相邻点------------------*/
+        //    if (j == 0)
+        //    {
+        //        k1 = k2 = 1;
+        //    }
+        //    else if (j == grid.GetUpperBound(1))
+        //    {
+        //        k1 = k2 = grid.GetUpperBound(1) - 1;
+        //    }
+        //    else
+        //    {
+        //        k1 = j - 1; k2 = j + 1;
+        //    }
+        //    for (int y = k1; y <= k2; y += 2)
+        //    {
+        //        if (grid[i, y] == dotColor)
+        //        {
+        //            ShowWin(dotColor);
+        //        }
+        //    }
+    
+        // }
+        //是否胜利。
+        private bool win(int dotColor)//edit
+        {
+            int num = 15;
+            int checkPoint = 0;
+            int i = 0;
+            int j = 0;
+            //横着检查。
+            for (int x = 0; x < num * num; x++)
+            {
+                int consecutive = 0;
+                checkPoint = x;
+                for (int y = 0; y < 5; y++)
+                {
+                    i = (checkPoint + y) % num;
+                    j = (int)checkPoint / num;
+                    if (checkPoint > (num * num - 1) || i > num - 1)
+                        break;
+                    if (grid[i, j] == dotColor)
+                    {
+                        consecutive++;
+                    }
+                    //checkPoint++;
+                }
+                if (consecutive == 5)
+                    return true;
+            }
+            //竖着检查
+            for (int x = 0; x < num * num; x++)
+            {
+                int consecutive = 0;
+                checkPoint = x;
+                for (int y = 0; y < 5; y++)
+                {
+                    i = (checkPoint + y) % num;
+                    j = (int)checkPoint / num;
+                    if (checkPoint > (num * num - 1) || i > num - 1)
+                        break;
+                    if (grid[j, i] == dotColor)
+                    {
+                        consecutive++;
+                    }
+                    //checkPoint++;
+                }
+                if (consecutive == 5)
+                    return true;
+            }
+            //正斜
+            for (int x = 0; x < num * num; x++)
+            {
+                int consecutive = 0;
+                checkPoint = x;
+                for (int y = 0; y < 5; y++)
+                {
+                    i = checkPoint % num + y;
+                    j = ((int)checkPoint / num) + y;
+                    if (i > num - 1 || j > num - 1)
+                        break;
+                    if (grid[i, j] == dotColor)
+                    {
+                        consecutive++;
+                    }
+                }
+                if (consecutive == 5)
+                    return true;
+            }
+            //反斜
+            for (int x = 0; x < num * num; x++)
+            {
+                int consecutive = 0;
+                checkPoint = x;
+                for (int y = 0; y < 5; y++)
+                {
+                    i = checkPoint % num - y;
+                    j = (int)checkPoint / num + y;
+                    if (i > num - 1 || i < 0 || j > num - 1 || j < 0)
+                        break;
+                    if (grid[i, j] == dotColor)
+                    {
+                        consecutive++;
+                    }
+                }
+                if (consecutive == 5)
+                    return true;
+            }
+            return false;
+        }
+
         /// <summary>出现相邻点的颜色为dotColor</summary>
         /// <param name="dotColor">相邻点的颜色</param>
         private void ShowWin(int dotColor)

@@ -215,11 +215,11 @@ namespace GobangGameClient
                         string winner = "";
                         if ((DotColor)int.Parse(splitString[1]) == DotColor.Black)
                         {
-                            winner = "黑方出现相邻点，白方胜利！";
+                            winner = "黑方出现五子相连，黑方胜利！";//edit
                         }
                         else
                         {
-                            winner = "白方出现相邻点，黑方胜利！";
+                            winner = "白方出现五子相连，白方胜利！";//edit
                         }
                         formPlaying.ShowMessage(winner);
                         formPlaying.Restart(winner);

@@ -314,6 +314,14 @@ namespace GobangGameServer
                         int color = int.Parse(splitString[5]);
                         gameTable[tableIndex].UnsetDot(xi, xj, color);
                         break;
+                    case "setdot"://edit
+                        tableIndex = int.Parse(splitString[1]);
+                        side = int.Parse(splitString[2]);
+                        int xit = int.Parse(splitString[3]);
+                        int xjt = int.Parse(splitString[4]);
+                        int colort = int.Parse(splitString[5]);
+                        gameTable[tableIndex].SetDot(xit, xjt, colort);
+                        break;
                     default:
                         service.SendToAll(userList, "什么意思啊：" + receiveString);
                         break;
