@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GobangGameClient", "GobangGameClient\GobangGameClient.csproj", "{22DA0659-4176-4F0F-88E6-90528E582EB4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GobangGameServer", "GobangGameServer\GobangGameServer.csproj", "{3A59E05B-5768-4E71-8D7D-0199EC59A0EC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A15637F8-B636-4F52-A3FD-2492864D6641}"
+	ProjectSection(SolutionItems) = preProject
+		GobangGameClient\Resources\black.gif = GobangGameClient\Resources\black.gif
+		GobangGameClient\Resources\white.gif = GobangGameClient\Resources\white.gif
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{22DA0659-4176-4F0F-88E6-90528E582EB4}.Debug|x86.ActiveCfg = Debug|x86
+		{22DA0659-4176-4F0F-88E6-90528E582EB4}.Debug|x86.Build.0 = Debug|x86
+		{22DA0659-4176-4F0F-88E6-90528E582EB4}.Release|x86.ActiveCfg = Release|x86
+		{22DA0659-4176-4F0F-88E6-90528E582EB4}.Release|x86.Build.0 = Release|x86
+		{3A59E05B-5768-4E71-8D7D-0199EC59A0EC}.Debug|x86.ActiveCfg = Debug|x86
+		{3A59E05B-5768-4E71-8D7D-0199EC59A0EC}.Debug|x86.Build.0 = Debug|x86
+		{3A59E05B-5768-4E71-8D7D-0199EC59A0EC}.Release|x86.ActiveCfg = Release|x86
+		{3A59E05B-5768-4E71-8D7D-0199EC59A0EC}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
