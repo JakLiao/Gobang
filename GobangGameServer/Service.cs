@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.Threading;
 
 namespace GobangGameServer
 {
@@ -31,6 +32,19 @@ namespace GobangGameServer
                 listbox.ClearSelected();
             }
         }
+
+        /// <summary>异步发送message给user</summary>
+        public void AsyncSendToOne(User user, string message)
+        {
+            SendToOneDelegate d = new SendToOneDelegate(SendToOne);
+            IAsyncResult result = d.BeginInvoke(user, message, null, null);
+            while (result.IsCompleted == false)
+            {
+                Thread.Sleep(250);
+            }
+            d.EndInvoke(result);
+        }
+        public delegate void SendToOneDelegate(User user, string str);
         /// <summary>向某个客户端发送信息</summary>
         /// <param name="gameTable">指定客户</param>
         /// <param name="gameTable">信息</param>
@@ -56,7 +70,7 @@ namespace GobangGameServer
             {
                 if (gameTable.gamePlayer[i].someone == true)
                 {
-                    SendToOne(gameTable.gamePlayer[i].user, str);
+                    AsyncSendToOne(gameTable.gamePlayer[i].user, str);
                 }
             }
         }
@@ -67,7 +81,7 @@ namespace GobangGameServer
         {
             for (int i = 0; i < userList.Count; i++)
             {
-                SendToOne(userList[i], str);
+                AsyncSendToOne(userList[i], str);
             }
         }
     }

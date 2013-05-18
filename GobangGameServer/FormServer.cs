@@ -27,6 +27,14 @@ namespace GobangGameServer
         private int port = 51888;
         private TcpListener myListener;
         private Service service;
+        public bool isExit //edit
+        {
+            get { return isExit; }
+            private set
+            {
+                isExit = value;
+            }
+        }
         public FormServer()
         {
             InitializeComponent();
@@ -39,6 +47,7 @@ namespace GobangGameServer
             IPAddress[] addrIP = Dns.GetHostAddresses(Dns.GetHostName());
             localAddress = addrIP[0];
             buttonStop.Enabled = false;
+            isExit = false;
         }
         /// <summary>【开始服务】按钮的Click事件</summary>
         private void buttonStart_Click(object sender, EventArgs e)
@@ -87,6 +96,7 @@ namespace GobangGameServer
             }
             service.AddItem(string.Format("目前连接用户数：{0}", userList.Count));
             service.AddItem("开始停止服务，并依次使用户退出!");
+            isExit = true;
             for (int i = 0; i < userList.Count; i++)
             {
                 //关闭后，客户端接收字符串为null,
@@ -101,31 +111,53 @@ namespace GobangGameServer
             textBoxMaxUsers.Enabled = true;
             textBoxMaxTables.Enabled = true;
         }
-        /// <summary>接收客户端连接</summary>
+        /// <summary>监听客户端请求</summary>
         private void ListenClientConnect()
         {
+            TcpClient newClient = null;
             while (true)
             {
-                TcpClient newClient = null;
-                try
+                ListenClientDelegate d = new ListenClientDelegate(ListenClient);
+                IAsyncResult result = d.BeginInvoke(out newClient, null, null);
+                //使用轮询方式来判断异步操作是否完成
+                while (result.IsCompleted == false)
                 {
-                    //等待用户进入
-                    newClient = myListener.AcceptTcpClient();
+                    if (isExit)
+                    {
+                        break;
+                    }
+                    Thread.Sleep(250);
                 }
-                catch
+                //获取Begin方法的返回值和所有输入/输出参数
+                d.EndInvoke(out newClient, result);
+                if (newClient != null)
                 {
-                    //当单击“停止监听”或者退出此窗体时AcceptTcpClient()会产生异常
-                    //因此可以利用此异常退出循环
+                    //每接受一个客户端连接,就创建一个对应的线程循环接收该客户端发来的信息
+                    User user = new User(newClient);
+                    Thread threadReceive = new Thread(ReceiveData);
+                    threadReceive.Start(user);
+                    userList.Add(user);
+                    service.AddItem(string.Format("[{0}]进入", newClient.Client.RemoteEndPoint));
+                    service.AddItem(string.Format("当前连接用户数：{0}", userList.Count));
+                }
+                else
+                {
                     break;
                 }
-                //每接受一个客户端连接,就创建一个对应的线程循环接收该客户端发来的信息
-                ParameterizedThreadStart pts = new ParameterizedThreadStart(ReceiveData);
-                Thread threadReceive = new Thread(pts);
-                User user = new User(newClient);
-                threadReceive.Start(user);
-                userList.Add(user);
-                service.AddItem(string.Format("{0}进入", newClient.Client.RemoteEndPoint));
-                service.AddItem(string.Format("当前连接用户数：{0}", userList.Count));
+            }
+        }
+
+        private delegate void ListenClientDelegate(out TcpClient client);
+        /// <summary>接受挂起的客户端连接请求</summary>
+        private void ListenClient(out TcpClient newClient)
+        {
+            try
+            {
+                newClient = myListener.AcceptTcpClient();
+            }
+            catch
+            {
+                newClient = null;
             }
         }
         /// <summary>
@@ -136,39 +168,29 @@ namespace GobangGameServer
         {
             User user = (User)obj;
             TcpClient client = user.client;
-            //是否正常退出接收线程
-            bool normalExit = false;
-            //用于控制是否退出循环
-            bool exitWhile = false;
-            while (exitWhile == false)
+            while (isExit == false)
             {
                 string receiveString = null;
-                try
+                ReceiveMessageDelegate d = new ReceiveMessageDelegate(ReceiveMessage);
+                IAsyncResult result = d.BeginInvoke(user, out receiveString, null, null);
+                //使用轮询方式来判断异步操作是否完成
+                while (result.IsCompleted == false)
                 {
-                    receiveString = user.sr.ReadLine();
-                }
-                catch
-                {
-                    //该客户底层套接字不存在时会出现异常
-                    service.AddItem("接收数据失败");
-                }
-                //TcpClient对象将套接字进行了封装，如果TcpClient对象关闭了，
-                //但是底层套接字未关闭，并不产生异常，但是读取的结果为null
-                if (receiveString == null)
-                {
-                    if (normalExit == false)
+                    if (isExit)
                     {
-                        //如果停止了监听，Connected为false
-                        if (client.Connected == true)
-                        {
-                            service.AddItem(string.Format(
-                                "与{0}失去联系，已终止接收该用户信息",
-                                 client.Client.RemoteEndPoint));
-                        }
-                        //如果该用户正在游戏桌上，则退出游戏桌
+                        break;
+                    }
+                    Thread.Sleep(250);
+                }
+                //获取Begin方法的返回值和所有输入/输出参数
+                d.EndInvoke(out receiveString, result);
+                if(receiveString==null)
+                {
+                    if (isExit == false)
+                    {
+                        service.AddItem(string.Format("与[{0}]失去联系，已终止接收该用户信息", client.Client.RemoteEndPoint));
                         RemoveClientfromPlayer(user);
                     }
-                    //退出循环
                     break;
                 }
                 service.AddItem(string.Format("来自{0}：{1}", user.userName, receiveString));
@@ -186,10 +208,10 @@ namespace GobangGameServer
                         if (userList.Count > maxUsers)
                         {
                             sendString = "Sorry";
-                            service.SendToOne(user, sendString);
+                            service.AsyncSendToOne(user, sendString);
                             service.AddItem("人数已满，拒绝" +
                                 splitString[1] + "进入游戏室");
-                            exitWhile = true;
+                            RemoveClientfromPlayer(user);
                         }
                         else
                         {
@@ -202,16 +224,15 @@ namespace GobangGameServer
                                 client.Client.RemoteEndPoint);
                             //允许该用户进入游戏室，即将各桌是否有人情况发送给该用户
                             sendString = "Tables," + this.GetOnlineString();
-                            service.SendToOne(user, sendString);
+                            service.AsyncSendToOne(user, sendString);
                         }
                         break;
                     case "logout":
                         //格式：Logout
                         //用户退出游戏室
                         service.AddItem(string.Format("{0}退出游戏室", user.userName));
-                        normalExit = true;
-                        exitWhile = true;
-                        break;
+                        RemoveClientfromPlayer(user);
+                        return;
                     case "sitdown":
                         //格式：SitDown,桌号,座位号
                         //该用户坐到某座位上
@@ -231,7 +252,7 @@ namespace GobangGameServer
                             //发送格式：SitDown,座位号,用户名
                             sendString = string.Format("SitDown,{0},{1}", anotherSide,
                               gameTable[tableIndex].gamePlayer[anotherSide].user.userName);
-                            service.SendToOne(user, sendString);
+                            service.AsyncSendToOne(user, sendString);
                         }
                         //同时告诉两个用户该用户入座(也可能对方无人)
                         //发送格式：SitDown,座位号,用户名
@@ -331,6 +352,20 @@ namespace GobangGameServer
             client.Close();
             service.AddItem(string.Format("有一个退出，剩余连接用户数：{0}", userList.Count));
         }
+        delegate void ReceiveMessageDelegate(User user, out string receiveMessage);
+        /// <summary>接受客户端发来的信息</summary>
+        private void ReceiveMessage(User user, out string receiveMessage)
+        {
+            try
+            {
+                receiveMessage = user.sr.ReadLine();
+            }
+            catch (Exception ex)
+            {
+                service.AddItem(ex.Message);
+                receiveMessage = null;
+            }
+        }
         /// <summary>
         /// 循环检测该用户是否坐到某游戏桌上,如果是,将其从游戏桌上移除，并终止该桌游戏
         /// </summary>
@@ -370,7 +405,7 @@ namespace GobangGameServer
                 if (gameTable[i].gamePlayer[otherSide].user.client.Connected == true)
                 {
                     //发送格式：Lost,座位号,用户名
-                    service.SendToOne(gameTable[i].gamePlayer[otherSide].user,
+                    service.AsyncSendToOne(gameTable[i].gamePlayer[otherSide].user,
                         string.Format("Lost,{0},{1}",
                          j, gameTable[i].gamePlayer[j].user.userName));
                 }
@@ -399,6 +434,8 @@ namespace GobangGameServer
             {
                 buttonStop_Click(null, null);
             }
-        }    
+        }
+
+        
     }
 }

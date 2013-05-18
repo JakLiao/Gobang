@@ -89,7 +89,6 @@ namespace GobangGameServer
                 //发送格式：SetDot,行,列,颜色
                 grid[i, j] = dotColor;
                 service.SendToBoth(this, string.Format("SetDot,{0},{1},{2}", i, j, dotColor));
-                //winCheck(i,j,dotColor);
                 if (win(dotColor))//edit
                 {
                     ShowWin(dotColor);
@@ -97,54 +96,6 @@ namespace GobangGameServer
                 turn = (turn + 1)%2;
             }
         }
-        //private void winCheck(int i, int j, int dotColor)
-        //{
-        //            /*----------以下判断当前行是否有相邻点----------*/
-        //    int k1, k2;   //k1:循环初值，k2:循环终值
-        //    if (i == 0)
-        //    {
-        //        如果是首行，只需要判断下边的点
-        //        k1 = k2 = 1;
-        //    }
-        //    else if (i == grid.GetUpperBound(0))
-        //    {
-        //        如果是最后一行，只需要判断上边的点
-        //        k1 = k2 = grid.GetUpperBound(0) - 1;
-        //    }
-        //    else
-        //    {
-        //        如果是中间的行，上下两边的点都要判断
-        //        k1 = i - 1; k2 = i + 1;
-        //    }
-        //    for (int x = k1; x <= k2; x += 2)
-        //    {
-        //        if (grid[x, j] == dotColor)
-        //        {
-        //            ShowWin(dotColor);
-        //        }
-        //    }
-        //    /*-------------以下判断当前列是否有相邻点------------------*/
-        //    if (j == 0)
-        //    {
-        //        k1 = k2 = 1;
-        //    }
-        //    else if (j == grid.GetUpperBound(1))
-        //    {
-        //        k1 = k2 = grid.GetUpperBound(1) - 1;
-        //    }
-        //    else
-        //    {
-        //        k1 = j - 1; k2 = j + 1;
-        //    }
-        //    for (int y = k1; y <= k2; y += 2)
-        //    {
-        //        if (grid[i, y] == dotColor)
-        //        {
-        //            ShowWin(dotColor);
-        //        }
-        //    }
-    
-        // }
         //是否胜利。
         private bool win(int dotColor)//edit
         {
