@@ -27,14 +27,7 @@ namespace GobangGameServer
         private int port = 51888;
         private TcpListener myListener;
         private Service service;
-        public bool isExit //edit
-        {
-            get { return isExit; }
-            private set
-            {
-                isExit = value;
-            }
-        }
+        public bool isExit; //edit
         public FormServer()
         {
             InitializeComponent();
@@ -44,8 +37,8 @@ namespace GobangGameServer
         private void FormServer_Load(object sender, EventArgs e)
         {
             listBox1.HorizontalScrollbar = true;
-            IPAddress[] addrIP = Dns.GetHostAddresses(Dns.GetHostName());
-            localAddress = addrIP[0];
+            //IPAddress[] addrIP = Dns.GetHostAddresses(Dns.GetHostName());
+            //localAddress = addrIP[0];
             buttonStop.Enabled = false;
             isExit = false;
         }
@@ -76,7 +69,8 @@ namespace GobangGameServer
             {
                 gameTable[i] = new GameTable(listBox1);
             }
-            myListener = new TcpListener(localAddress, port);
+           // myListener = new TcpListener(localAddress, port);
+            myListener = new TcpListener(IPAddress.Any, port);
             myListener.Start();
             service.AddItem(string.Format("开始在{0}:{1}监听客户连接", localAddress, port));
             //创建一个线程监听客户端连接请求

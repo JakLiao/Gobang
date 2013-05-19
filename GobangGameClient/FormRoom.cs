@@ -23,11 +23,12 @@ namespace GobangGameClient
         private Service service;
         private FormPlaying formPlaying;
         //是否正常退出接收线程
-        private bool normalExit = false;
+        private bool isExit = false;
         //命令是否来自服务器
         private bool isReceiveCommand = false;
         //所坐的游戏桌座位号，-1表示未入座,0表示坐到黑方,1表示坐到白方
         private int side = -1;
+        BackgroundWorker connectWork = new BackgroundWorker();
         public FormRoom()
         {
             InitializeComponent();
@@ -39,54 +40,101 @@ namespace GobangGameClient
             maxPlayingTables = 0;
             textBoxLocal.ReadOnly = true;
             textBoxServer.ReadOnly = true;
+            connectWork.DoWork += new DoWorkEventHandler(connectWork_DoWork);
+            connectWork.RunWorkerCompleted +=
+                new RunWorkerCompletedEventHandler(connectWork_RunWorkerCompleted);
+        }
+        /// <summary>异步方式与服务器进行连接</summary>
+        void connectWork_DoWork(object sender, DoWorkEventArgs e)
+        {
+            client = new TcpClient();
+            //此处为方便演示，实际使用时要将Dns.GetHostName()改为服务器域名
+            IAsyncResult result = client.BeginConnect(Dns.GetHostName(), 51888, null, null);
+            while (result.IsCompleted == false)
+            {
+                Thread.Sleep(100);
+            }
+            try
+            {
+                client.EndConnect(result);
+                e.Result = "success";
+            }
+            catch (Exception ex)
+            {
+                e.Result = ex.Message;
+                return;
+            }
+        }
+        /// <summary>异步方式与服务器完成连接操作后的处理</summary>
+        void connectWork_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Result.ToString() == "success")
+            {
+                groupBox1.Visible = true;
+                textBoxLocal.Text = client.Client.LocalEndPoint.ToString();
+                textBoxServer.Text = client.Client.RemoteEndPoint.ToString();
+                buttonConnect.Enabled = false;
+                //获取网络流
+                NetworkStream netStream = client.GetStream();
+                //将网络流作为二进制读写对象
+                sr = new StreamReader(netStream, System.Text.Encoding.UTF8);
+                sw = new StreamWriter(netStream, System.Text.Encoding.UTF8);
+                service = new Service(listBox1, sw);
+                service.SendToServer("Login," + textBoxName.Text.Trim());
+                Thread threadReceive = new Thread(new ThreadStart(ReceiveData));
+                threadReceive.IsBackground = true;
+                threadReceive.Start();
+            }
+            else
+            {
+                MessageBox.Show("与服务器连接失败 "+e.Result, "",
+                   MessageBoxButtons.OK, MessageBoxIcon.Information);
+                buttonConnect.Enabled = true;
+            }
         }
         /// <summary>【登录】按钮的Click事件</summary>
         private void buttonConnect_Click(object sender, EventArgs e)
         {
+            buttonConnect.Enabled = false;
+            connectWork.RunWorkerAsync();
+        }
+        delegate void ReceiveMessageDelegate(out string receiveMessage);
+        /// <summary>读取服务器发过来的信息</summary>
+        private void ReceiveMessage(out string receiveMessage)
+        {
+            receiveMessage = null;
             try
             {
-                //仅作本机测试,实际使用时要将Dns.GetHostName()改为服务器域名
-                client = new TcpClient(Dns.GetHostName(), 51888);
+                receiveMessage = sr.ReadLine();
             }
-            catch
+            catch (Exception ex)
             {
-                MessageBox.Show("与服务器连接失败", "",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
+                MessageBox.Show(ex.Message, "",
+                   MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-            groupBox1.Visible = true;
-            textBoxLocal.Text = client.Client.LocalEndPoint.ToString();
-            textBoxServer.Text = client.Client.RemoteEndPoint.ToString();
-            buttonConnect.Enabled = false;
-            //获取网络流
-            NetworkStream netStream = client.GetStream();
-            sr = new StreamReader(netStream, System.Text.Encoding.UTF8);
-            sw = new StreamWriter(netStream, System.Text.Encoding.UTF8);
-            service = new Service(listBox1, sw);
-            //登录服务器，获取服务器各桌信息
-            //格式：Login,昵称
-            service.SendToServer("Login," + textBoxName.Text.Trim());
-            Thread threadReceive = new Thread(new ThreadStart(ReceiveData));
-            threadReceive.Start();
         }
         /// <summary>处理接收数据</summary>
         private void ReceiveData()
         {
-            bool exitWhile = false;
-            while (exitWhile == false)
+            string receiveString = null;
+            while (isExit == false)
             {
-                string receiveString = null;
-                try
+                ReceiveMessageDelegate d = new ReceiveMessageDelegate(ReceiveMessage);
+                IAsyncResult result = d.BeginInvoke(out receiveString, null, null);
+                //使用轮询方式来判断异步操作是否完成
+                while (result.IsCompleted == false)
                 {
-                    receiveString = sr.ReadLine();
+                    if (isExit)
+                    {
+                        break;
+                    }
+                    Thread.Sleep(250);
                 }
-                catch
+                //获取Begin方法的返回值和所有输入/输出参数
+                d.EndInvoke(out receiveString, result);
+                if(receiveString==null)
                 {
-                    service.AddItemToListBox("接收数据失败");
-                }
-                if (receiveString == null)
-                {
-                    if (normalExit == false)
+                    if (isExit == false)
                     {
                         MessageBox.Show("与服务器失去联系，游戏无法继续！");
                     }
@@ -95,7 +143,7 @@ namespace GobangGameClient
                         ExitFormPlaying();
                     }
                     side = -1;
-                    normalExit = true;
+                    isExit = true;
                     //结束线程
                     break;
                 }
@@ -106,7 +154,6 @@ namespace GobangGameClient
                 {
                     case "sorry":
                         MessageBox.Show("连接成功，但游戏室人数已满，无法进入。");
-                        exitWhile = true;
                         break;
                     case "tables":
                         //字符串格式：Tables,各桌是否有人的字符串
@@ -360,9 +407,9 @@ namespace GobangGameClient
                 else
                 {
                     //服务器停止服务时,normalExited为true，其他情况为false
-                    if (normalExit == false)
+                    if (isExit == false)
                     {
-                        normalExit = true;
+                        isExit = true;
                         //通知服务器，用户从游戏室退出
                         service.SendToServer("Logout");
                     }
