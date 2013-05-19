@@ -316,7 +316,8 @@ namespace GobangGameServer
                         if (gameTable[tableIndex].gamePlayer[anotherSide].started == true)
                         {
                             gameTable[tableIndex].ResetGrid();
-                            gameTable[tableIndex].StartTimer();
+                            //gameTable[tableIndex].StartTimer();
+                            gameTable[tableIndex].Turn = 0;
                         }
                         break;
                     case "unsetdot":

@@ -65,6 +65,9 @@
     <EmbeddedResource Include="FormPlaying.resx">
       <DependentUpon>FormPlaying.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="FormRoom.resx">
+      <DependentUpon>FormRoom.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

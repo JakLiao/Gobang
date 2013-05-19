@@ -65,6 +65,7 @@
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "难度级别";
+            this.groupBox1.Visible = false;
             // 
             // radioButton5
             // 
@@ -240,6 +241,7 @@
             this.label5.Size = new System.Drawing.Size(41, 12);
             this.label5.TabIndex = 8;
             this.label5.Text = "成绩：";
+            this.label5.Visible = false;
             // 
             // label6
             // 
@@ -249,6 +251,7 @@
             this.label6.Size = new System.Drawing.Size(41, 12);
             this.label6.TabIndex = 8;
             this.label6.Text = "成绩：";
+            this.label6.Visible = false;
             // 
             // label1
             // 
@@ -280,7 +283,7 @@
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.groupBox1);
             this.Name = "FormPlaying";
-            this.Text = "吃棋子";
+            this.Text = "五子棋";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormPlaying_FormClosing);
             this.Load += new System.EventHandler(this.FormPlaying_Load);
             this.groupBox1.ResumeLayout(false);

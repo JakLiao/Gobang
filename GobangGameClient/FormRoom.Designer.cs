@@ -142,9 +142,9 @@
             this.Controls.Add(this.label3);
             this.Controls.Add(this.textBoxName);
             this.Name = "FormRoom";
-            this.Text = "吃棋子游戏室";
-            this.Load += new System.EventHandler(this.FormRoom_Load);
+            this.Text = "五子棋游戏室";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormRoom_FormClosing);
+            this.Load += new System.EventHandler(this.FormRoom_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.ResumeLayout(false);

@@ -17,7 +17,11 @@ namespace GobangGameServer
         private System.Timers.Timer timer;       //用于定时产生棋子
         private int NextdotColor = 0;            //应该产生黑棋子还是白棋子
         private ListBox listbox;
-        private int turn;                   //轮流玩,0为黑，1为白 edit 
+        public int turn;                   //轮流玩,0为黑，1为白 edit
+        public int Turn{
+            get{return turn;}
+            set { turn = value; }
+        }
         Random rnd = new Random();
         Service service;
         public GameTable(ListBox listbox)
@@ -29,7 +33,7 @@ namespace GobangGameServer
             //timer.Elapsed += new ElapsedEventHandler(timer_Elapsed);
             timer.Enabled = false;
             this.listbox = listbox;
-            this.turn = 0;
+            this.turn = -1;  //edit
             service = new Service(listbox);
             ResetGrid();
         }

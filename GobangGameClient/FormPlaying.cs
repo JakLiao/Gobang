@@ -223,10 +223,11 @@ namespace GobangGameClient
         /// <summary>点击帮助按钮时触发的事件</summary>
         private void buttonHelp_Click(object sender, EventArgs e)
         {
-            string str =
-                "\n本游戏每两人为一组。游戏玩法：用鼠标点击你所在方颜色的点，每\n\n" +
-                "消失一个，得一分。当任何一方在同行或同列出现两个相邻的点时，游\n\n" +
-                "戏就结束了，此时得分多的为胜方。注意：点击对方的点无效。\n";
+            //string str =
+            //    "\n本游戏每两人为一组。游戏玩法：用鼠标点击你所在方颜色的点，每\n\n" +
+            //    "消失一个，得一分。当任何一方在同行或同列出现两个相邻的点时，游\n\n" +
+            //    "戏就结束了，此时得分多的为胜方。注意：点击对方的点无效。\n";
+            string str = "先连五子的人获胜";
             MessageBox.Show(str, "帮助信息");
         }
         /// <summary>点击开始按钮时触发的事件</summary>
